@@ -89,6 +89,7 @@ func newton(z complex128, power int) color.Color {
 	return color.Black
 }
 
+// Function pow set z to the power of the power http request param.
 func pow(z complex128, time int) complex128 {
 	v := z
 	for i := 0; i < (time - 1); i++ {
