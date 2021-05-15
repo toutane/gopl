@@ -1,3 +1,6 @@
+// Exercise 3.11 format "-1234.5678" to "-1,234.567,8".
+// It is a enhane version of exercise 3.10 (one with floating-point and optional
+// sign support).
 package main
 
 import (
