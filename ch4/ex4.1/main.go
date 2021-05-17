@@ -10,12 +10,14 @@ import (
 
 func main() {
 	args := os.Args[1:]
-	c1 := sha256.Sum256([]byte("x"))
-	c2 := sha256.Sum256([]byte("X"))
+	a1 := []byte("x")
+	a2 := []byte("X")
 	if len(args) > 1 {
-		c1 = sha256.Sum256([]byte(args[0]))
-		c2 = sha256.Sum256([]byte(args[1]))
+		a1 = []byte(args[0])
+		a2 = []byte(args[1])
 	}
+	c1 := sha256.Sum256(a1)
+	c2 := sha256.Sum256(a2)
 	fmt.Printf("%d bits are different between the two SHA256 hashes.", diff(c1, c2))
 }
 
