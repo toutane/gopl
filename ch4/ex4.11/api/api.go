@@ -3,6 +3,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -75,4 +76,54 @@ func GetIssues(owner, repo string, params map[string]string) (*IssuesList, error
 
 	resp.Body.Close()
 	return &result, nil
+}
+
+func CreateIssue(owner, repo, title string) (*Issue, error) {
+	url := APIURL + strings.Join([]string{"repos", owner, repo, "issues"}, "/")
+
+	client := &http.Client{}
+	fields := map[string]string{"title": title}
+	buf := &bytes.Buffer{}
+	encoder := json.NewEncoder(buf)
+	err := encoder.Encode(fields)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", url, buf)
+	if err != nil {
+		return nil, err
+	}
+
+	if username == "" || password == "" {
+		fmt.Print("Username: ")
+		fmt.Scanf("%s", &username)
+		fmt.Print("Password: ")
+		fmt.Scanf("%s", &password)
+	}
+
+	req.Header.Set("Accept", "application/vnd.github.v3.text-match+json")
+	req.SetBasicAuth(username, password)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusCreated {
+		resp.Body.Close()
+		return nil, fmt.Errorf("fail to create issue: %s", resp.Status)
+
+	}
+
+	var result Issue
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		resp.Body.Close()
+		return nil, err
+	}
+
+	resp.Body.Close()
+	return &result, nil
+
 }
