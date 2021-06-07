@@ -15,7 +15,7 @@ const APIURL = "https://api.github.com/" // By default, all requests receive the
 // get function send GET HTTP request to GitHub API and returns the response.
 func get(url string) (*http.Response, error) {
 
-	resp, err := http.Get(APIURL + url)
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -30,8 +30,12 @@ func get(url string) (*http.Response, error) {
 
 // GetIssue gets one specific issue by calling get, decodes the body of response
 // and returns a IssueList.
-func GetIssue(owner, repo string, issueN int) (*Issue, error) {
-	url := strings.Join([]string{"repos", owner, repo, "issues", strconv.Itoa(issueN)}, "/")
+func GetIssue(owner, repo string, params map[string]string, issueN int) (*Issue, error) {
+	url := APIURL + strings.Join([]string{"repos", owner, repo, "issues", strconv.Itoa(issueN)}, "/")
+	url += "?"
+	for k, v := range params {
+		url += k + "=" + v
+	}
 
 	resp, err := get(url)
 	if err != nil {
@@ -44,15 +48,18 @@ func GetIssue(owner, repo string, issueN int) (*Issue, error) {
 		resp.Body.Close()
 		return nil, err
 	}
-
 	resp.Body.Close()
 	return &result, nil
 }
 
 // GetIssues gets all issues of a GitHub repo, decodes the body of response and
 // returns a IssueList.
-func GetIssues(owner, repo string) (*IssuesList, error) {
-	url := strings.Join([]string{"repos", owner, repo, "issues"}, "/")
+func GetIssues(owner, repo string, params map[string]string) (*IssuesList, error) {
+	url := APIURL + strings.Join([]string{"repos", owner, repo, "issues"}, "/")
+	url += "?"
+	for k, v := range params {
+		url += k + "=" + v
+	}
 
 	resp, err := get(url)
 	if err != nil {

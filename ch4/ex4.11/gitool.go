@@ -21,6 +21,7 @@ func main() {
 	issueNumber := readCmd.Int("number", -1, "Number of the issue you want to read.")
 	username := readCmd.String("username", "username", "GitHub username.")
 	repo := readCmd.String("repo", "repo", "GitHub repository.")
+	state := readCmd.String("state", "open", "Issue state.")
 
 	if len(os.Args) < 2 {
 		quit(nil)
@@ -30,7 +31,7 @@ func main() {
 
 	case "read":
 		readCmd.Parse(os.Args[2:])
-		read(*username, *repo, *issueNumber)
+		read(*username, *repo, *state, *issueNumber)
 
 	default:
 		quit(nil)
@@ -38,17 +39,18 @@ func main() {
 }
 
 // Read function prints one or all issues of a GitHub repo.
-func read(owner, repo string, issueNumber int) {
+func read(owner, repo, state string, issueNumber int) {
+	params := map[string]string{"state": state}
 	if issueNumber < 0 {
-		result, err := api.GetIssues(owner, repo)
+		result, err := api.GetIssues(owner, repo, params)
 		if err != nil {
 			quit(err)
 		}
 		for _, item := range *result {
-			fmt.Printf("#%-5d %9.9s %.55s\n", item.Number, item.User.Login, item.Title)
+			fmt.Printf("%-5s #%-5d %9.9s %.55s\n", item.State, item.Number, item.User.Login, item.Title)
 		}
 	} else {
-		result, err := api.GetIssue(owner, repo, issueNumber)
+		result, err := api.GetIssue(owner, repo, params, issueNumber)
 		if err != nil {
 			quit(err)
 		}
