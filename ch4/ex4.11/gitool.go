@@ -18,7 +18,7 @@ func main() {
 		fmt.Printf("%s\n", data)
 	*/
 	readCmd := flag.NewFlagSet("read", flag.ExitOnError)
-	issueNumber := readCmd.Int("number", 0, "Number of the issue you want to read.")
+	issueNumber := readCmd.Int("number", -1, "Number of the issue you want to read.")
 	username := readCmd.String("username", "username", "GitHub username.")
 	repo := readCmd.String("repo", "repo", "GitHub repository.")
 
@@ -37,12 +37,22 @@ func main() {
 	}
 }
 
+// Read function prints one or all issues of a GitHub repo.
 func read(owner, repo string, issueNumber int) {
-	result, err := api.Get(owner, repo, issueNumber)
-	if err != nil {
-		quit(err)
-	}
-	for _, item := range *result {
+	if issueNumber < 0 {
+		result, err := api.GetIssues(owner, repo)
+		if err != nil {
+			quit(err)
+		}
+		for _, item := range *result {
+			fmt.Printf("#%-5d %9.9s %.55s\n", item.Number, item.User.Login, item.Title)
+		}
+	} else {
+		result, err := api.GetIssue(owner, repo, issueNumber)
+		if err != nil {
+			quit(err)
+		}
+		item := *result
 		fmt.Printf("#%-5d %9.9s %.55s\n", item.Number, item.User.Login, item.Title)
 	}
 }
