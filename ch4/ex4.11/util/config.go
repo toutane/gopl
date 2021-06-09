@@ -1,14 +1,42 @@
 package util
 
-import "github.com/spf13/viper"
+import (
+	"fmt"
+	"os"
 
-type Config struct {
+	"github.com/spf13/viper"
+)
+
+type Hosts struct {
 	GitHubUser  string `mapstructure:"GITHUB_USER"`
 	GitHubToken string `mapstructure:"GITHUB_TOKEN"`
 }
 
-func LoadConfig(path string) (*Config, error) {
-	viper.AddConfigPath(path)
+func IsInitialized() bool {
+	viper.AddConfigPath(".")
+	viper.SetConfigName("app")
+	viper.SetConfigType("env")
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			return false
+		}
+
+	}
+	return true
+}
+
+func InitializeConfig() error {
+	fmt.Println("INITIALAZING...")
+	_, err := os.OpenFile("app.env", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	Reset(".")
+	return nil
+}
+
+func LoadHosts() (*Hosts, error) {
+	viper.AddConfigPath(".")
 	viper.SetConfigName("app")
 	viper.SetConfigType("env")
 
@@ -18,10 +46,24 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, err
 	}
 
-	var config Config
-	if err := viper.Unmarshal(&config); err != nil {
+	var hosts Hosts
+	if err := viper.Unmarshal(&hosts); err != nil {
 		return nil, err
 	}
 
-	return &config, nil
+	// Returns nil if GitHub token is empty.
+	if hosts.GitHubToken != "" {
+		return &hosts, nil
+	}
+	return nil, nil
+}
+
+func Reset(path string) {
+	viper.AddConfigPath(path)
+	viper.SetConfigName("app")
+	viper.SetConfigType("env")
+
+	viper.Set("GITHUB_USER", "")
+	viper.Set("GITHUB_PASS", "")
+	viper.WriteConfig()
 }

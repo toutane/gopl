@@ -7,9 +7,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
+
+	"github.com/toutane/gopl/ch4/ex4.11/auth"
+	"github.com/toutane/gopl/ch4/ex4.11/util"
 )
 
 const APIURL = "https://api.github.com/" // By default, all requests receive the v3 of the REST API.
@@ -79,17 +81,28 @@ func GetIssues(owner, repo string, params map[string]string) (*IssuesList, error
 	return &result, nil
 }
 
-func CreateIssue(owner, repo, title string) (*Issue, error) {
-	url := APIURL + strings.Join([]string{"repos", owner, repo, "issues"}, "/")
+func CreateIssue(repo, title string) (*Issue, error) {
 
-	username := os.Getenv("GITHUB_USER")
-	password := os.Getenv("GITHUB_PASS")
+	if !auth.IsLogged() {
+		return nil, fmt.Errorf("You must be logged in for create a new issue.")
+
+	}
+
+	hosts, err := util.LoadHosts()
+	if err != nil {
+		return nil, err
+	}
+
+	username := hosts.GitHubUser
+	token := hosts.GitHubToken
+
+	url := APIURL + strings.Join([]string{"repos", username, repo, "issues"}, "/")
 
 	client := &http.Client{}
 	fields := map[string]string{"title": title}
 	buf := &bytes.Buffer{}
 	encoder := json.NewEncoder(buf)
-	err := encoder.Encode(fields)
+	err = encoder.Encode(fields)
 	if err != nil {
 		return nil, err
 	}
@@ -99,15 +112,8 @@ func CreateIssue(owner, repo, title string) (*Issue, error) {
 		return nil, err
 	}
 
-	if username == "" && password == "" {
-		fmt.Print("Username: ")
-		fmt.Scanf("%s", &username)
-		fmt.Print("Password: ")
-		fmt.Scanf("%s", &password)
-	}
-
 	req.Header.Set("Accept", "application/vnd.github.v3.text-match+json")
-	req.SetBasicAuth(username, password)
+	req.SetBasicAuth(username, token)
 
 	resp, err := client.Do(req)
 	if err != nil {

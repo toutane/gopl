@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/toutane/gopl/ch4/ex4.11/api"
+	"github.com/toutane/gopl/ch4/ex4.11/auth"
 	"github.com/toutane/gopl/ch4/ex4.11/util"
 )
 
@@ -18,11 +19,6 @@ func main() {
 		}
 		fmt.Printf("%s\n", data)
 	*/
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		quit(err)
-	}
-	fmt.Println(config.GitHubUser)
 
 	readCmd := flag.NewFlagSet("read", flag.ExitOnError)
 	issueNumber := readCmd.Int("number", -1, "Number of the issue you want to read.")
@@ -31,9 +27,19 @@ func main() {
 	state := readCmd.String("state", "open", "Issue state.")
 
 	createCmd := flag.NewFlagSet("create", flag.ExitOnError)
-	createUsername := createCmd.String("username", "username", "GitHub username.")
+	//createUsername := createCmd.String("username", "username", "GitHub username.")
 	title := createCmd.String("title", "New issue.", "Issut title.")
 	createRepo := createCmd.String("repo", "repo", "GitHub repository.")
+
+	authCmd := flag.NewFlagSet("auth", flag.ExitOnError)
+
+	if !util.IsInitialized() {
+		fmt.Println("CONFIG IS NOT INITIALIZED")
+		err := util.InitializeConfig()
+		if err != nil {
+			quit(err)
+		}
+	}
 
 	if len(os.Args) < 2 {
 		quit(nil)
@@ -41,13 +47,44 @@ func main() {
 
 	switch os.Args[1] {
 
+	case "auth":
+		if len(os.Args) < 3 {
+			quit(nil)
+		}
+
+		switch os.Args[2] {
+
+		case "status":
+			fmt.Println(auth.Status())
+
+		case "login":
+			mess, err := auth.Login()
+			if err != nil {
+				quit(err)
+			}
+
+			fmt.Println(mess)
+
+		case "logout":
+			mess, err := auth.Logout(".")
+			if err != nil {
+				quit(err)
+			}
+
+			fmt.Println(mess)
+
+		default:
+			quit(nil)
+		}
+		authCmd.Parse(os.Args[3:])
+
 	case "read":
 		readCmd.Parse(os.Args[2:])
 		read(*readUsername, *readRepo, *state, *issueNumber)
 
 	case "create":
 		createCmd.Parse(os.Args[2:])
-		create(*createUsername, *createRepo, *title)
+		create(*createRepo, *title)
 
 	default:
 		quit(nil)
@@ -76,8 +113,8 @@ func read(owner, repo, state string, issueNumber int) {
 }
 
 // Create function creates a new issue.
-func create(owner, repo, title string) {
-	result, err := api.CreateIssue(owner, repo, title)
+func create(repo, title string) {
+	result, err := api.CreateIssue(repo, title)
 	if err != nil {
 		quit(err)
 	}
