@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -81,6 +82,9 @@ func GetIssues(owner, repo string, params map[string]string) (*IssuesList, error
 func CreateIssue(owner, repo, title string) (*Issue, error) {
 	url := APIURL + strings.Join([]string{"repos", owner, repo, "issues"}, "/")
 
+	username := os.Getenv("GITHUB_USER")
+	password := os.Getenv("GITHUB_PASS")
+
 	client := &http.Client{}
 	fields := map[string]string{"title": title}
 	buf := &bytes.Buffer{}
@@ -95,7 +99,7 @@ func CreateIssue(owner, repo, title string) (*Issue, error) {
 		return nil, err
 	}
 
-	if username == "" || password == "" {
+	if username == "" && password == "" {
 		fmt.Print("Username: ")
 		fmt.Scanf("%s", &username)
 		fmt.Print("Password: ")

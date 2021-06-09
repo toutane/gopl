@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/toutane/gopl/ch4/ex4.11/api"
+	"github.com/toutane/gopl/ch4/ex4.11/util"
 )
 
 func main() {
@@ -17,6 +18,12 @@ func main() {
 		}
 		fmt.Printf("%s\n", data)
 	*/
+	config, err := util.LoadConfig(".")
+	if err != nil {
+		quit(err)
+	}
+	fmt.Println(config.GitHubUser)
+
 	readCmd := flag.NewFlagSet("read", flag.ExitOnError)
 	issueNumber := readCmd.Int("number", -1, "Number of the issue you want to read.")
 	readUsername := readCmd.String("username", "username", "GitHub username.")
