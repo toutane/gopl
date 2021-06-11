@@ -8,8 +8,8 @@ import (
 )
 
 type Hosts struct {
-	GitHubUser  string `mapstructure:"GITHUB_USER"`
-	GitHubToken string `mapstructure:"GITHUB_TOKEN"`
+	GitHubUser        string `mapstructure:"GITHUB_USER"`
+	GitHubAccessToken string `mapstructure:"GITHUB_ACCESS_TOKEN"`
 }
 
 func IsInitialized() bool {
@@ -52,10 +52,21 @@ func LoadHosts() (*Hosts, error) {
 	}
 
 	// Returns nil if GitHub token is empty.
-	if hosts.GitHubToken != "" {
+	if hosts.GitHubAccessToken != "" {
 		return &hosts, nil
 	}
 	return nil, nil
+}
+
+func Write(key, value string) {
+	viper.AddConfigPath(".")
+	viper.SetConfigName("app")
+	viper.SetConfigType("env")
+
+	viper.Set(key, value)
+
+	viper.WriteConfig()
+
 }
 
 func Reset(path string) {
@@ -64,6 +75,6 @@ func Reset(path string) {
 	viper.SetConfigType("env")
 
 	viper.Set("GITHUB_USER", "")
-	viper.Set("GITHUB_PASS", "")
+	viper.Set("GITHUB_ACCESS_TOKEN", "")
 	viper.WriteConfig()
 }

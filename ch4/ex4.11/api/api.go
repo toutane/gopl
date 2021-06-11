@@ -94,7 +94,7 @@ func CreateIssue(repo, title string) (*Issue, error) {
 	}
 
 	username := hosts.GitHubUser
-	token := hosts.GitHubToken
+	token := hosts.GitHubAccessToken
 
 	url := APIURL + strings.Join([]string{"repos", username, repo, "issues"}, "/")
 
@@ -113,7 +113,7 @@ func CreateIssue(repo, title string) (*Issue, error) {
 	}
 
 	req.Header.Set("Accept", "application/vnd.github.v3.text-match+json")
-	req.SetBasicAuth(username, token)
+	req.Header.Set("Authorization", "token "+token)
 
 	resp, err := client.Do(req)
 	if err != nil {
