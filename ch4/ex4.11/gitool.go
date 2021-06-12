@@ -8,8 +8,11 @@ import (
 
 	"github.com/toutane/gopl/ch4/ex4.11/api"
 	"github.com/toutane/gopl/ch4/ex4.11/auth"
+	"github.com/toutane/gopl/ch4/ex4.11/cli"
 	"github.com/toutane/gopl/ch4/ex4.11/util"
 )
+
+var username = "username"
 
 func main() {
 	/*
@@ -20,16 +23,31 @@ func main() {
 		fmt.Printf("%s\n", data)
 	*/
 
+	hosts, err := util.LoadHosts()
+	if err != nil {
+		quit(err)
+	}
+	if hosts != nil {
+		username = hosts.GitHubUser
+	}
+
 	readCmd := flag.NewFlagSet("read", flag.ExitOnError)
+	readRepo := readCmd.String("repo", "repo", "Issue's repository.")
+	readUsername := readCmd.String("username", username, "Issue's owner.")
 	issueNumber := readCmd.Int("number", -1, "Number of the issue you want to read.")
-	readUsername := readCmd.String("username", "username", "GitHub username.")
-	readRepo := readCmd.String("repo", "repo", "GitHub repository.")
-	state := readCmd.String("state", "open", "Issue state.")
+	state := readCmd.String("state", "open", "Issues state.")
 
 	createCmd := flag.NewFlagSet("create", flag.ExitOnError)
-	//createUsername := createCmd.String("username", "username", "GitHub username.")
-	title := createCmd.String("title", "New issue.", "Issut title.")
-	createRepo := createCmd.String("repo", "repo", "GitHub repository.")
+	title := createCmd.String("title", "New issue by ", "New issue's title.")
+	createRepo := createCmd.String("repo", "repo", "New issue's repository.")
+
+	closedCmd := flag.NewFlagSet("close", flag.ExitOnError)
+	closedRepo := closedCmd.String("repo", "repo", "Issue's repository.")
+	closedNumber := closedCmd.Int("number", -1, "Number of the issue you want to close.")
+
+	updateCmd := flag.NewFlagSet("close", flag.ExitOnError)
+	updateRepo := updateCmd.String("repo", "repo", "Issue's repository.")
+	updateNumber := updateCmd.Int("number", -1, "Number of the issue you want to update.")
 
 	authCmd := flag.NewFlagSet("auth", flag.ExitOnError)
 
@@ -42,6 +60,7 @@ func main() {
 	}
 
 	if len(os.Args) < 2 {
+		fmt.Println(help("help"))
 		quit(nil)
 	}
 
@@ -49,6 +68,7 @@ func main() {
 
 	case "auth":
 		if len(os.Args) < 3 {
+			fmt.Println(help("auth"))
 			quit(nil)
 		}
 
@@ -74,19 +94,53 @@ func main() {
 			fmt.Println(mess)
 
 		default:
+			fmt.Println(help("auth"))
 			quit(nil)
 		}
 		authCmd.Parse(os.Args[3:])
 
 	case "read":
+		if len(os.Args) < 3 {
+			fmt.Println(help("read"))
+			quit(nil)
+		}
 		readCmd.Parse(os.Args[2:])
 		read(*readUsername, *readRepo, *state, *issueNumber)
 
 	case "create":
+		if len(os.Args) < 3 {
+			fmt.Println(help("create"))
+			quit(nil)
+		}
 		createCmd.Parse(os.Args[2:])
 		create(*createRepo, *title)
 
+	case "update":
+		if len(os.Args) < 3 {
+			fmt.Println(help("update"))
+			quit(nil)
+		}
+		updateCmd.Parse(os.Args[2:])
+		if *updateNumber < 0 {
+			fmt.Println(help("update"))
+			quit(nil)
+		}
+		update(*updateRepo, *updateNumber)
+
+	case "close":
+		if len(os.Args) < 3 {
+			fmt.Println(help("close"))
+			quit(nil)
+		}
+		closedCmd.Parse(os.Args[2:])
+		if *closedNumber < 0 {
+			fmt.Println(help("close"))
+			quit(nil)
+		}
+		closed(*closedRepo, *closedNumber)
+
 	default:
+		fmt.Println(help("help"))
 		quit(nil)
 	}
 }
@@ -94,6 +148,7 @@ func main() {
 // Read function prints one or all issues of a GitHub repo.
 func read(owner, repo, state string, issueNumber int) {
 	params := map[string]string{"state": state}
+
 	if issueNumber < 0 {
 		result, err := api.GetIssues(owner, repo, params)
 		if err != nil {
@@ -114,17 +169,46 @@ func read(owner, repo, state string, issueNumber int) {
 
 // Create function creates a new issue.
 func create(repo, title string) {
+	if title == "New issue by " {
+		title += username + "."
+	}
+
 	result, err := api.CreateIssue(repo, title)
 	if err != nil {
 		quit(err)
 	}
+
 	item := *result
-	fmt.Printf("Issue number #%d successfully created by %s.", item.Number, item.User.Login)
+	fmt.Printf("\n\nIssue number #%d successfully created by %s.\n", item.Number, item.User.Login)
+}
+
+func update(repo string, number int) {
+	result, err := api.UpdateIssue(repo, number)
+	if err != nil {
+		quit(err)
+	}
+
+	item := *result
+	fmt.Printf("\n\nIssue number #%d successfully updated by %s.\n", item.Number, item.User.Login)
+}
+
+func closed(repo string, number int) {
+	result, err := api.ClosedIssue(repo, number)
+	if err != nil {
+		quit(err)
+	}
+
+	item := *result
+	fmt.Printf("\n\nIssue number #%d successfully closed by %s.\n", item.Number, item.User.Login)
+}
+
+func help(command string) string {
+	return cli.HelpMessages[command]
 }
 
 func quit(err error) {
 	if err != nil {
-		fmt.Printf("Gitool: %s\n", err)
+		fmt.Println(err)
 	}
 	os.Exit(1)
 }

@@ -28,14 +28,14 @@ func Status() string {
 		return fmt.Sprintf("Auth status: %s", err)
 	}
 	if hosts != nil {
-		return fmt.Sprintf("Logged in to github.com as %s.", hosts.GitHubUser)
+		return fmt.Sprintf("\nYou are logged in to github.com as %s.", hosts.GitHubUser)
 	}
-	return fmt.Sprintf("Not logged.")
+	return fmt.Sprintf("\nYou are not logged in.")
 }
 
 func Login() (string, error) {
 	if IsLogged() {
-		return fmt.Sprintf("You are already logged in !"), nil
+		return fmt.Sprintf("You are already logged in."), nil
 	}
 
 	err := GetUsername()
@@ -48,16 +48,17 @@ func Login() (string, error) {
 		return fmt.Sprint("Failed to ask the device code."), err
 	}
 
-	fmt.Printf("Your code is: %s\n", device.UserCode)
+	fmt.Printf("\nHere are your authorization codes: %s\n", device.UserCode)
+	cli.Clip(device.UserCode)
 	exec.Command("open", device.VerificationURI).Start()
 
-	isConfirm, err := cli.AskForConfirm("Do you enter codes")
+	isConfirm, err := cli.AskForConfirm("\nHave you authorized GiTool app")
 	if err != nil {
-		return fmt.Sprint("Failes to ask confirmation"), err
+		return fmt.Sprint("Failed to ask confirmation"), err
 	}
 
 	if !isConfirm {
-		return fmt.Sprint("Please enter your codes."), fmt.Errorf("Codes not confirmed.")
+		return fmt.Sprint("Please enter your codes."), fmt.Errorf("\nYou must authorize GiTool app.")
 	}
 
 	access, err := GetAccess(device.DeviceCode)
@@ -80,7 +81,7 @@ func Login() (string, error) {
 
 func GetUsername() error {
 	var username string
-	fmt.Print("Enter GitHub username: ")
+	fmt.Print("\nPlease enter your GitHub username: ")
 	_, err := fmt.Scan(&username)
 	util.Write("GITHUB_USER", username)
 	return err
@@ -145,8 +146,12 @@ func GetDevice() (*Device, error) {
 }
 
 func Logout(path string) (string, error) {
+	isLogged := IsLogged()
 	util.Reset(path)
-	return fmt.Sprintf("You have been log out."), nil
+	if isLogged {
+		return fmt.Sprintf("\nYou have been logged out."), nil
+	}
+	return fmt.Sprintf("\nYou are not logged in."), nil
 }
 
 func IsLogged() bool {
