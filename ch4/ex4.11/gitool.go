@@ -15,13 +15,6 @@ import (
 var username = "username"
 
 func main() {
-	/*
-		data, err := cli.GetInputFromEditor()
-		if err != nil {
-			fmt.Printf("Fail at getting input from editor: %s\n", err)
-		}
-		fmt.Printf("%s\n", data)
-	*/
 
 	hosts, err := util.LoadHosts()
 	if err != nil {
@@ -182,6 +175,7 @@ func create(repo, title string) {
 	fmt.Printf("\n\nIssue number #%d successfully created by %s.\n", item.Number, item.User.Login)
 }
 
+// Update function update issue.
 func update(repo string, number int) {
 	result, err := api.UpdateIssue(repo, number)
 	if err != nil {
@@ -192,6 +186,7 @@ func update(repo string, number int) {
 	fmt.Printf("\n\nIssue number #%d successfully updated by %s.\n", item.Number, item.User.Login)
 }
 
+// Closed function close issue.
 func closed(repo string, number int) {
 	result, err := api.ClosedIssue(repo, number)
 	if err != nil {
@@ -202,10 +197,12 @@ func closed(repo string, number int) {
 	fmt.Printf("\n\nIssue number #%d successfully closed by %s.\n", item.Number, item.User.Login)
 }
 
+// Help function prints help message for each command.
 func help(command string) string {
 	return cli.HelpMessages[command]
 }
 
+// Quit function prints a error and exit.
 func quit(err error) {
 	if err != nil {
 		fmt.Println(err)
