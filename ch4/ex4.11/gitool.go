@@ -1,4 +1,12 @@
-// Gitool let the user create, read, update and close GitHub issues.
+// GiTool let the user create, read, update and close GitHub issues.
+
+// GiTool app starts from exercise 4.11 of the book The Go Programming Language
+// by Alan A. A. Donovan & Brian W. Kernighan.
+// You can find the book here: https://gopl.io
+
+// GiTool app is on the GitHub marketplace as gitool-app.
+// You can find it here: https://github.com/apps/gitoo-app
+
 package main
 
 import (
@@ -12,10 +20,22 @@ import (
 	"github.com/toutane/gopl/ch4/ex4.11/util"
 )
 
+// Set default username.
 var username = "username"
 
 func main() {
 
+	// Check if config (app.env) is in the good place (in the same
+	// folder as gitool.go).
+	if !util.IsInitialized() {
+		// fmt.Println("CONFIG IS NOT INITIALIZED")
+		err := util.InitializeConfig()
+		if err != nil {
+			quit(err)
+		}
+	}
+
+	// If user is logged in, replace username with GitHubUser.
 	hosts, err := util.LoadHosts()
 	if err != nil {
 		quit(err)
@@ -24,6 +44,7 @@ func main() {
 		username = hosts.GitHubUser
 	}
 
+	// FlagsSets for read, create, update and close commands.
 	readCmd := flag.NewFlagSet("read", flag.ExitOnError)
 	readRepo := readCmd.String("repo", "repo", "Issue's repository.")
 	readUsername := readCmd.String("username", username, "Issue's owner.")
@@ -44,19 +65,13 @@ func main() {
 
 	authCmd := flag.NewFlagSet("auth", flag.ExitOnError)
 
-	if !util.IsInitialized() {
-		fmt.Println("CONFIG IS NOT INITIALIZED")
-		err := util.InitializeConfig()
-		if err != nil {
-			quit(err)
-		}
-	}
-
+	// Check if there is a command.
 	if len(os.Args) < 2 {
 		fmt.Println(help("help"))
 		quit(nil)
 	}
 
+	// Check the command.
 	switch os.Args[1] {
 
 	case "auth":

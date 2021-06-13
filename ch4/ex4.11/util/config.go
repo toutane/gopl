@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/viper"
@@ -26,7 +25,7 @@ func IsInitialized() bool {
 }
 
 func InitializeConfig() error {
-	fmt.Println("INITIALAZING...")
+	// fmt.Println("INITIALAZING...")
 	_, err := os.OpenFile("app.env", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
