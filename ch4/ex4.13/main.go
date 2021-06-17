@@ -22,6 +22,9 @@ func run() error {
 	searchPage := searchCmd.Int("p", 1, "The page number of the results.")
 	searchKeywords := searchCmd.String("k", "indiana jones", "The keywords of the movie you are looking for (separeted by a space)")
 
+	posterCmd := flag.NewFlagSet("poster", flag.ExitOnError)
+	posterMovieId := posterCmd.Int("id", 1, "The id of the movie you want the poster of.")
+
 	if len(os.Args) < 2 {
 		return errors.New("missing command")
 	}
@@ -42,8 +45,15 @@ func run() error {
 		}
 
 	case "poster":
-		fmt.Println("You enter poster command.")
-		return nil
+		posterCmd.Parse(os.Args[2:])
+
+		movieId := *posterMovieId
+		if movieId < 0 {
+			movieId = 1
+		}
+		if err := movies.Poster(movieId); err != nil {
+			return fmt.Errorf("poster failed: %s", err)
+		}
 
 	default:
 		return errors.New("wrong command (search or poster)")

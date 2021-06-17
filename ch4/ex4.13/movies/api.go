@@ -3,7 +3,9 @@ package movies
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -59,4 +61,80 @@ func searchMoviesByKeywords(keywords []string, page int) (*MovieList, error) {
 
 	resp.Body.Close()
 	return &result, nil
+}
+
+type Images struct {
+	Id      int
+	Posters []Image
+}
+
+type Image struct {
+	FilePath string `json:"file_path"`
+}
+
+func Poster(movieId int) error {
+	images, err := getImages(movieId)
+	if err != nil {
+		return fmt.Errorf("poster failed: %s", err)
+	}
+
+	//We keep the first only.
+	//TODO: Allow user to chose the poster he want.
+	poster := images.Posters[0]
+
+	if err := downloadPoster(movieId, &poster); err != nil {
+		return fmt.Errorf("poster failed: %s", err)
+	}
+	fmt.Println("The poster has been successfully downloaded.")
+	return nil
+}
+
+func getImages(movieId int) (*Images, error) {
+	url := APIURL + "/movie/" + strconv.Itoa(movieId) + "/images?api_key=" + APIKEY
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("images fetch failed: %s", err)
+	}
+
+	var result Images
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		resp.Body.Close()
+		return nil, fmt.Errorf("json decode failed: %s", err)
+	}
+
+	resp.Body.Close()
+	return &result, nil
+}
+
+func downloadPoster(movieId int, poster *Image) error {
+	url := "https://themoviedb.org/t/p/w440_and_h660_face" + poster.FilePath
+	fmt.Println(url)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return fmt.Errorf("poster download failed: %s", err)
+	}
+
+	if err := writePoster(movieId, resp); err != nil {
+		return fmt.Errorf("poster download failed: %s", err)
+	}
+
+	return nil
+}
+
+func writePoster(movieId int, response *http.Response) error {
+	file, err := os.Create(strconv.Itoa(movieId) + ".jpg")
+	if err != nil {
+		return fmt.Errorf("create file failed: %s", err)
+	}
+	defer file.Close()
+
+	_, err = io.Copy(file, response.Body)
+	if err != nil {
+		return fmt.Errorf("write poster failed: %s", err)
+	}
+
+	return nil
 }
