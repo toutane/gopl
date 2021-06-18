@@ -63,9 +63,9 @@ func searchMoviesByKeywords(keywords []string, page int) (*MovieList, error) {
 	return &result, nil
 }
 
-type Images struct {
-	Id      int
-	Posters []Image
+type ImageList struct {
+	Id     int
+	Images []Image `json:"posters"`
 }
 
 type Image struct {
@@ -73,14 +73,14 @@ type Image struct {
 }
 
 func Poster(movieId int) error {
-	images, err := getImages(movieId)
+	imageList, err := getImages(movieId)
 	if err != nil {
 		return fmt.Errorf("poster failed: %s", err)
 	}
 
 	//We keep the first only.
-	//TODO: Allow user to chose the poster he want.
-	poster := images.Posters[0]
+	//TODO: Allow user to chose the poster he wants.
+	poster := imageList.Images[0]
 
 	if err := downloadPoster(movieId, &poster); err != nil {
 		return fmt.Errorf("poster failed: %s", err)
@@ -89,7 +89,7 @@ func Poster(movieId int) error {
 	return nil
 }
 
-func getImages(movieId int) (*Images, error) {
+func getImages(movieId int) (*ImageList, error) {
 	url := APIURL + "/movie/" + strconv.Itoa(movieId) + "/images?api_key=" + APIKEY
 
 	resp, err := http.Get(url)
@@ -97,7 +97,7 @@ func getImages(movieId int) (*Images, error) {
 		return nil, fmt.Errorf("images fetch failed: %s", err)
 	}
 
-	var result Images
+	var result ImageList
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		resp.Body.Close()
